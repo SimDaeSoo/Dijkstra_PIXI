@@ -5,18 +5,21 @@ import Vector2D from "../interfaces/Vector2D";
 export interface MapGeneratorOptions {
     seed?: string;
     size?: { width: number, height: number };
+    density?: number;
 }
 
 export default class MapGenerator {
     private seed: string;
-    private size: Dictionary<number>
+    private size: Dictionary<number>;
+    private density: number;
 
     // public method
     public initialize(options?: MapGeneratorOptions) {
-        const DEFAULT_OPTIONS: MapGeneratorOptions = { seed: '', size: { width: 10, height: 10 } };
+        const DEFAULT_OPTIONS: MapGeneratorOptions = { seed: '', size: { width: 10, height: 10 }, density: 0.5 };
         options = Object.assign(DEFAULT_OPTIONS, options ? options : {});
         this.size = options.size;
         this.seed = options.seed;
+        this.density = options.density;
     }
 
     public generate(): Array<Tile> {
@@ -27,24 +30,18 @@ export default class MapGenerator {
 
     // private method
     public generateArrayMap(): Array<Array<TILE_TYPE>> {
+        const start: number = Date.now();
         const result: Array<Array<TILE_TYPE>> = this.getNewArrayMap();
+        this.createTile(result, { x: Math.round(this.size.width / 2), y: Math.round(this.size.height / 2) });
 
-        while (this.getProcedureRate(result) < 0.5) {
-            const startPosition: Vector2D = this.randomPosition;
-            const size: number = Math.round(Math.random() * 4) * 3 + 3;
-
-            for (let y = startPosition.y; y < startPosition.y + size; y++) {
-                if (result?.[y] === undefined) break;
-
-                for (let x = startPosition.x; x < startPosition.x + size; x++) {
-                    if (result?.[y]?.[x] === undefined) break;
-                    result[y][x] = TILE_TYPE.GROUND;
-                }
-            }
+        while (this.getProcedureRate(result) < this.density) {
+            const startPosition: Vector2D = this.getRandomPosition(result);
+            this.createTile(result, startPosition);
         }
 
         this.printArrayMap(result);
-        console.log(`${this.getProcedureRate(result) * 100}%`);
+        console.log(`${this.getProcedureRate(result) * 100}% / width: ${this.size.width * 16}px, height: ${this.size.height * 16}px`);
+        console.log(`${Date.now() - start}ms`);
         return result;
     }
 
@@ -74,15 +71,50 @@ export default class MapGenerator {
         return result;
     }
 
-    private get randomPosition(): Vector2D {
-        const x: number = Math.round(Math.random() * this.size.width);
-        const y: number = Math.round(Math.random() * this.size.height);
-
-        return { x, y }
+    private createTile(origin: Array<Array<TILE_TYPE>>, position: Vector2D): void {
+        for (let y = position.y - 1; y <= position.y + 1; y++) {
+            for (let x = position.x - 1; x <= position.x + 1; x++) {
+                if (origin?.[y]?.[x] === TILE_TYPE.EMPTY) origin[y][x] = TILE_TYPE.GROUND;
+            }
+        }
     }
 
-    private printArrayMap(result: Array<Array<TILE_TYPE>>): void {
-        for (let tiles of result) {
+    private getRandomPosition(map: Array<Array<TILE_TYPE>>): Vector2D {
+        const positions: Array<Vector2D> = [];
+
+        for (let y in map) {
+            for (let x in map[y]) {
+                let canPush: boolean = (map[y][x] !== TILE_TYPE.EMPTY) && this.isValidatePosition(map, { x: Number(x), y: Number(y) });
+                if (canPush) {
+                    positions.push({ x: Number(x), y: Number(y) });
+                }
+            }
+        }
+
+        if (positions.length > 0) {
+            const index: number = Math.round(Math.random() * (positions.length - 1));
+            return positions[index];
+        } else {
+            let x: number = Math.round(Math.random() * this.size.width);
+            let y: number = Math.round(Math.random() * this.size.height);
+            return { x, y };
+        }
+    }
+
+    private isValidatePosition(map: Array<Array<TILE_TYPE>>, position: Vector2D): boolean {
+        let isValidate: boolean = false;
+
+        for (let y = position.y - 1; y <= position.y + 1; y++) {
+            for (let x = position.x - 1; x <= position.x + 1; x++) {
+                isValidate = isValidate || (map?.[y]?.[x] === TILE_TYPE.EMPTY);
+            }
+        }
+
+        return isValidate;
+    }
+
+    private printArrayMap(map: Array<Array<TILE_TYPE>>): void {
+        for (let tiles of map) {
             let tileConsole: string = tiles.toString();
             tileConsole = tileConsole.replace(/,/g, ' ');
             tileConsole = tileConsole.replace(/0/g, '□');
