@@ -1,6 +1,7 @@
-import { Tile, TILE_TYPE, DIRECTION, Neighbor } from "../interfaces/Tile";
+import { Tile, TILE_TYPE, DIRECTION } from "../interfaces/Tile";
 import Dictionary from "../interfaces/Dictionary";
 import Vector2D from "../interfaces/Vector2D";
+import * as SeedRandom from 'seedrandom';
 
 export interface MapGeneratorOptions {
     seed?: string;
@@ -15,6 +16,7 @@ export default class MapGenerator {
     private density: number;
     private currentTileCount: number;
     private targetPositions: Array<number>;
+    private rng: SeedRandom;
 
     // public method
     public initialize(options?: MapGeneratorOptions) {
@@ -22,6 +24,7 @@ export default class MapGenerator {
         options = Object.assign(DEFAULT_OPTIONS, options ? options : {});
         [this.size, this.seed, this.density, this.mapDictionary] = [options.size, options.seed, options.density, {}];
         [this.currentTileCount, this.targetPositions] = [0, []];
+        this.rng = SeedRandom(this.seed);
     }
 
     public generate(): Dictionary<Tile> {
@@ -29,7 +32,7 @@ export default class MapGenerator {
         this.createTileAtPosition({ x: Math.floor(this.size.width / 2), y: Math.floor(this.size.height / 2) });
 
         while (this.currentDensity < this.density) {
-            const randomIndex: number = Math.round(Math.random() * (this.targetPositions.length - 1));
+            const randomIndex: number = Math.round(this.rng() * (this.targetPositions.length - 1));
             const randomPosition: Vector2D = this.indexToPosition(this.targetPositions[randomIndex]);
             const AREA: number = 1;
 
