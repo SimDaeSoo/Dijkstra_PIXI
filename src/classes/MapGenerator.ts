@@ -91,6 +91,23 @@ export default class MapGenerator {
         }
     }
 
+    public getTileAtPosition(position: Vector2D): Tile {
+        let diff: number = Infinity;
+        let target: Tile;
+
+        for (let id in this.mapDictionary) {
+            const tile: Tile = this.mapDictionary[id];
+            const tileDiff: number = Math.sqrt((position.x - tile.position.x) ** 2 + (position.y - tile.position.y) ** 2);
+
+            if (diff > tileDiff) {
+                diff = tileDiff;
+                target = tile;
+            }
+        }
+
+        return target;
+    }
+
     // private
     private get currentDensity(): number {
         return this.currentTileCount / (this.size.width * this.size.height);

@@ -11,6 +11,6 @@ const map: Dictionary<Tile> = mapGenerator.generate();
 mapGenerator.print();
 
 const pathFinder: PathFinder = new PathFinder();
-const path: Array<Vector2D> = pathFinder.find(map[10].position, map[662].position, mapGenerator.map);
+const path: Array<Vector2D> = pathFinder.find(map[11].position, mapGenerator.getTileAtPosition({ x: 0, y: 0 }).position, mapGenerator.map);
 
 console.log(path);
