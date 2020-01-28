@@ -12,8 +12,8 @@ export const enum DIRECTION {
 }
 
 export const enum TILE_TYPE {
-    EMPTY,
-    GROUND
+    GROUND,
+    EMPTY
 }
 
 export interface Path {
@@ -23,10 +23,12 @@ export interface Path {
 }
 
 export type Neighbor = {
-    [direction in DIRECTION]?: Path;
+    [ket: number]: Path;
 }
 
 export interface Tile {
+    id: number;
+    type: TILE_TYPE;
     position: Vector2D;
     neighbor: Neighbor;
 }
